@@ -24,6 +24,15 @@ def save():
 	global filepath
 	json.dump(calendar,open(filepath,"w"),indent=4)
 
+def validate_time(input_string):
+	if len(input_string)!=4:
+		return False
+	for ch in input_string:
+		if not ch.isdigit():
+			return False
+	det = int(input_string)
+	return det%100<60 and det<2400
+
 def get_current_epoch():
 	return int(time.time())
 
@@ -52,13 +61,21 @@ def find_day(input_string):
 	return IDEAL_DAY_STRINGS[day_of_week(get_current_epoch())]
 
 def find_nearest_date(day):
+	global times
 	for t in times[1:]:
 		if IDEAL_DAY_STRINGS[day_of_week(t)] == day:
 			return to_date_time(t)[0]
+	print(times)
 	return to_date_time(times[0])[0]
+
+def auxiliary_normalizer(input_string):
+	if len(input_string)==1:
+		return "0"+input_string
+	return input_string
 
 def find_date_time(input_string):
 	components = re.findall(r"\d+",input_string)
+	components = [auxiliary_normalizer(c) for c in components]
 	date_now, time_now = to_date_time(get_current_epoch())
 	date_now = date_now.split("-")
 	if len(components) == 1:
@@ -74,6 +91,16 @@ def find_universal(input_string):
 	if any(ch.isdigit() for ch in input_string):
 		return find_date_time(input_string)
 	return find_nearest_date(find_day(input_string))
+
+def day_index(day):
+	for i in range(len(IDEAL_DAY_STRINGS)):
+		if IDEAL_DAY_STRINGS[i] == day:
+			return i
+	for i in range(len(DAYS)):
+		if DAYS[i] == day:
+			return i
+	return -1
+
 
 def display():
 	def k(e):
@@ -92,6 +119,10 @@ def display():
 		for event in calendar["weekly_events"]:
 			if IDEAL_DAY_STRINGS[day_of_week(t)] == find_day(event["day"]):
 				events.append(event)
+		for event in calendar["monthly_events"]:
+			day_month = to_date_time(t)[0][-2:-1]
+			if int(day_month) == event["day"]:
+				events.append(event)
 		events.sort(key=k)
 		for event in events:
 			disp_string = ""
@@ -102,14 +133,7 @@ def display():
 		print("")
 	print("┗━━┻━━━┛")
 
-def validate_time(input_string):
-	if len(input_string)!=4:
-		return False
-	for ch in input_string:
-		if not ch.isdigit():
-			return False
-	det = int(input_string)
-	return det%100<60 and det<2400
+
 
 def add_event():
 	event = input("event name:")
@@ -140,6 +164,67 @@ def add_event():
 	save()
 	print("event added")
 
+def event_match(event, key):
+	if "date" in event:
+		if key in event["date"]:
+			return True
+	if "day" in event:
+		if key in event["day"]:
+			return True
+	if key.lower() in event["name"].lower() or key in ["time"] or key.lower() in event['tag'].lower():
+		return True
+	return False
+
+def disp_event_singular(e):
+	return "┃"+e["date"]+"┃"+e["time"]+"┃"+TAGS[e["tag"]]+e["name"]+CLOSE
+
+def disp_event_weekly(e):
+	return "┃"+DAYS[day_index(find_day(e["day"]))]+"┃"+e["time"]+"┃"+TAGS[e["tag"]]+e["name"]+CLOSE
+
+def disp_event_monthly(e):
+	return "┃"+e["day"]+"┃"+e["time"]+"┃"+TAGS[e["tag"]]+e["name"]+CLOSE
+
+def search(key):
+	singular_events = []
+	for event in calendar["singular_events"]:
+		if event_match(event, key):
+			singular_events.append(event)
+	future_events = []
+	past_events = []
+	now = get_current_epoch()
+	for e in singular_events:
+		if now <= to_epoch(e["date"],e["time"]):
+			future_events.append(e)
+		else:
+			past_events.append(e)
+	def sort_key(e):
+		return to_epoch(e["date"],e["time"])
+	future_events.sort( key = sort_key)
+	past_events.sort(key = sort_key)
+	monthly_events = []
+	weekly_events = []
+	for e in calendar["weekly_events"]:
+		if event_match(e, key):
+			weekly_events.append(e)
+	for e in calendar["monthly_events"]:
+		if event_match(e, key):
+			monthly_events.append(e)
+	print("┏PAST━━━━━━┳━━━━┓")
+	for e in past_events:
+		print(disp_event_singular(e))
+	print("┗━━━━━━━━━━┻━━━━┛")
+	print("┏FUTURE━━━━┳━━━━┓")
+	for e in future_events:
+		print(disp_event_singular(e))
+	print("┗━━━━━━━━━━┻━━━━┛")
+	print("┏WEEKLY━━┓")
+	for e in weekly_events:
+		print(disp_event_weekly(e))
+	print("┗━━━┻━━━━┛")
+	print("┏MONTHLY┓")
+	for e in monthly_events:
+		print(disp_event_repeating(e))
+	print("┗━━┻━━━━┛")
 
 
 
@@ -148,7 +233,10 @@ if len(sys.argv) <= 2:
 	display()
 else:
 	if sys.argv[2] == "add":
+		initialize(N)
 		add_event()
+	elif sys.argv[2] == "search":
+		search(sys.argv[3])
 	else:
 		initialize(int(sys.argv[2]))
 		display()
