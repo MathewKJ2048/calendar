@@ -1,4 +1,6 @@
-N = 12
+import os
+
+N = os.get_terminal_size().lines - 3
 
 BLACK = "\033[90m"
 RED = "\033[91m"

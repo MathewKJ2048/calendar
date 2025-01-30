@@ -124,13 +124,14 @@ def display():
 			if int(day_month) == event["day"]:
 				events.append(event)
 		events.sort(key=k)
+		day_disp_string = ""
 		for event in events:
 			disp_string = ""
 			if event["time"] != "0000":
 				disp_string = "["+event["time"]+"]"+" "
 			disp_string+=event["name"]
-			print(TAGS[event["tag"]]+disp_string+CLOSE,end="┃")
-		print("")
+			day_disp_string+=(TAGS[event["tag"]]+disp_string+CLOSE+"┃")
+		print(day_disp_string)
 	print("┗━━┻━━━┛")
 
 
@@ -223,7 +224,7 @@ def search(key):
 	print("┗━━━┻━━━━┛")
 	print("┏MONTHLY┓")
 	for e in monthly_events:
-		print(disp_event_repeating(e))
+		print(disp_event_monthly(e))
 	print("┗━━┻━━━━┛")
 
 
