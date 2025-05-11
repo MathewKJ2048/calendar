@@ -50,7 +50,7 @@
 	[
 		{
             "day": "20",
-            "time": "0000",
+            "time": "1000",
             "name": "sample-monthly-deadline",
             "tag": "deadline"
         }

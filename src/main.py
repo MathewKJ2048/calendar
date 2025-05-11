@@ -67,8 +67,8 @@ def display():
 			if IDEAL_DAY_STRINGS[day_of_week(t)] == find_day(event["day"]):
 				events.append(event)
 		for event in calendar["monthly_events"]:
-			day_month = to_date_time(t)[0][-2:-1]
-			if int(day_month) == event["day"]:
+			day_month = to_date_time(t)[0][-2:]
+			if day_month == event["day"]:
 				events.append(event)
 		events.sort(key=k)
 		day_disp_string = ""
