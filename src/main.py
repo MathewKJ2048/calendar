@@ -1,9 +1,4 @@
-from conf import *
-import json
-import sys
-from datetime import datetime
-import time
-import re
+from lib import *
 
 INTERVAL = 24*60*60
 
@@ -24,29 +19,6 @@ def save():
 	global filepath
 	json.dump(calendar,open(filepath,"w"),indent=4)
 
-def validate_time(input_string):
-	if len(input_string)!=4:
-		return False
-	for ch in input_string:
-		if not ch.isdigit():
-			return False
-	det = int(input_string)
-	return det%100<60 and det<2400
-
-def get_current_epoch():
-	return int(time.time())
-
-def to_epoch(date, time="0000"): # date in "YYYY-MM-DD"
-	date = date.split("-")
-	return int(datetime(int(date[0]),int(date[1]),int(date[2]),int
-	(time[0]+time[1]),int(time[2]+time[3])).timestamp())
-
-def to_date_time(epoch):
-	strtime = datetime.fromtimestamp(epoch).strftime('%Y-%m-%d %H%M %S').split(" ")
-	return strtime[0], strtime[1]
-
-def day_of_week(epoch):
-	return datetime.fromtimestamp(epoch).weekday()
 
 def find_day(input_string):
 	global times
@@ -68,38 +40,13 @@ def find_nearest_date(day):
 	print(times)
 	return to_date_time(times[0])[0]
 
-def auxiliary_normalizer(input_string):
-	if len(input_string)==1:
-		return "0"+input_string
-	return input_string
-
-def find_date_time(input_string):
-	components = re.findall(r"\d+",input_string)
-	components = [auxiliary_normalizer(c) for c in components]
-	date_now, time_now = to_date_time(get_current_epoch())
-	date_now = date_now.split("-")
-	if len(components) == 1:
-		return date_now[0]+"-"+date_now[1]+"-"+components[0]
-	elif len(components) == 2:
-		return date_now[0]+"-"+components[0]+"-"+components[1]
-	elif len(components) == 3:
-		return components[0]+"-"+components[1]+"-"+components[2]
-	return date_now
-
 
 def find_universal(input_string):
 	if any(ch.isdigit() for ch in input_string):
 		return find_date_time(input_string)
 	return find_nearest_date(find_day(input_string))
 
-def day_index(day):
-	for i in range(len(IDEAL_DAY_STRINGS)):
-		if IDEAL_DAY_STRINGS[i] == day:
-			return i
-	for i in range(len(DAYS)):
-		if DAYS[i] == day:
-			return i
-	return -1
+
 
 
 def display():
@@ -130,7 +77,7 @@ def display():
 			if event["time"] != "0000":
 				disp_string = "["+event["time"]+"]"+" "
 			disp_string+=event["name"]
-			day_disp_string+=(TAGS[event["tag"]]+disp_string+CLOSE+"┃")
+			day_disp_string+=color(event["tag"],disp_string)+"┃"
 		print(day_disp_string)
 	print("┗━━┻━━━┛")
 
@@ -151,7 +98,7 @@ def add_event():
 	tag = tag_list[int(input("tag:"))]
 	print("")
 
-	print(TAGS[tag]+event+CLOSE+" at "+ti+" on "+date+" ("+IDEAL_DAY_STRINGS[day_of_week(to_epoch(date,ti))]+")")
+	print(color(tag,event)+" at "+ti+" on "+date+" ("+IDEAL_DAY_STRINGS[day_of_week(to_epoch(date,ti))]+")")
 	t = input("confirmation (y/n)")
 	if t=='n' or t=='N':
 		return
@@ -177,39 +124,29 @@ def event_match(event, key):
 	return False
 
 def disp_event_singular(e):
-	return "┃"+e["date"]+"┃"+e["time"]+"┃"+TAGS[e["tag"]]+e["name"]+CLOSE
+	return "┃"+e["date"]+"┃"+e["time"]+"┃"+color(e["tag"],e["name"])
 
 def disp_event_weekly(e):
-	return "┃"+DAYS[day_index(find_day(e["day"]))]+"┃"+e["time"]+"┃"+TAGS[e["tag"]]+e["name"]+CLOSE
+	return "┃"+DAYS[day_index(find_day(e["day"]))]+"┃"+e["time"]+"┃"+color(e["tag"],e["name"])
 
 def disp_event_monthly(e):
-	return "┃"+e["day"]+"┃"+e["time"]+"┃"+TAGS[e["tag"]]+e["name"]+CLOSE
+	return "┃"+e["day"]+"┃"+e["time"]+"┃"+color(e["tag"],e["name"])
 
 def search(key):
-	singular_events = []
-	for event in calendar["singular_events"]:
-		if event_match(event, key):
-			singular_events.append(event)
-	future_events = []
-	past_events = []
+	monthly_events = [e for e in calendar["monthly_events"] if event_match(e, key)]
+	weekly_events = [e for e in calendar["weekly_events"] if event_match(e, key)]
+
+	singular_events = [e for e in calendar["singular_events"] if event_match(e, key)]	
 	now = get_current_epoch()
-	for e in singular_events:
-		if now <= to_epoch(e["date"],e["time"]):
-			future_events.append(e)
-		else:
-			past_events.append(e)
+	future_events = [e for e in singular_events if now <= to_epoch(e["date"],e["time"])]
+	past_events = [e for e in singular_events if now > to_epoch(e["date"],e["time"])]
+
 	def sort_key(e):
 		return to_epoch(e["date"],e["time"])
-	future_events.sort( key = sort_key)
+	future_events.sort(key = sort_key)
 	past_events.sort(key = sort_key)
-	monthly_events = []
-	weekly_events = []
-	for e in calendar["weekly_events"]:
-		if event_match(e, key):
-			weekly_events.append(e)
-	for e in calendar["monthly_events"]:
-		if event_match(e, key):
-			monthly_events.append(e)
+	
+	
 	print("┏PAST━━━━━━┳━━━━┓")
 	for e in past_events:
 		print(disp_event_singular(e))

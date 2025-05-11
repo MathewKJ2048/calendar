@@ -1,4 +1,9 @@
 import os
+import json
+import sys
+from datetime import datetime
+import time
+import re
 
 N = os.get_terminal_size().lines - 3
 
@@ -10,6 +15,7 @@ BLUE = "\033[94m"
 LAVENDAR = "\033[95m"
 TEAL = "\033[96m"
 WHITE = "\033[97m"
+
 CLOSE = "\033[0m"
 
 TAGS = {
@@ -17,7 +23,6 @@ TAGS = {
 	"work-event":LAVENDAR,
 	"deadline":RED,
 	"life-event":GREEN,
-	
 }
 
 DAYS = [
