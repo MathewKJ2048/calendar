@@ -2,7 +2,7 @@
 
 A terminal-based calendar, written in python
 
-![](./images/simple.png)
+![](./images/basic.png)
 
 ## Installation:
 
