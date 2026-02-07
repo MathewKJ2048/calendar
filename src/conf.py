@@ -7,20 +7,22 @@ import re
 
 N = os.get_terminal_size().lines - 3
 
-BLACK = "\033[90m"
-RED = "\033[91m"
-GREEN = "\033[92m"
-YELLOW = "\033[93m"
-BLUE = "\033[94m"
-LAVENDAR = "\033[95m"
-TEAL = "\033[96m"
-WHITE = "\033[97m"
+BLACK = "\033[30m"    # Dark gray or black
+RED = "\033[31m"      # Dark red
+GREEN = "\033[32m"    # Dark green
+YELLOW = "\033[33m"   # Dark yellow/brown
+BLUE = "\033[34m"     # Dark blue
+MAGENTA = "\033[35m"  # Dark magenta
+CYAN = "\033[36m"     # Dark cyan
+WHITE = "\033[37m"    # Light gray
+
+
 
 CLOSE = "\033[0m"
 
 TAGS = {
 	"none":WHITE,
-	"work-event":LAVENDAR,
+	"work-event":BLUE,
 	"deadline":RED,
 	"life-event":GREEN,
 }
